@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>化学元素合成挑战</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <div class="mode-selector" id="modeSelector">
+      <h1>🧪 化学元素合成挑战</h1>
+      <p class="subtitle">选择游戏模式开始你的化学之旅</p>
+      <div class="mode-cards">
+        <div class="mode-card mode-single" data-mode="element">
+          <div class="mode-icon">⚛️</div>
+          <h2>原子合成模式</h2>
+          <p>用质子、中子、电子组合成各种化学元素</p>
+          <button class="btn btn-primary">开始游戏</button>
+        </div>
+        <div class="mode-card mode-molecule" data-mode="molecule">
+          <div class="mode-icon">🔗</div>
+          <h2>化学键连接模式</h2>
+          <p>将原子通过化学键连接成分子</p>
+          <button class="btn btn-primary">开始游戏</button>
+        </div>
+        <div class="mode-card mode-collection" data-mode="collection">
+          <div class="mode-icon">📚</div>
+          <h2>元素周期表图鉴</h2>
+          <p>收集并学习所有化学元素</p>
+          <button class="btn btn-primary">查看图鉴</button>
+        </div>
+        <div class="mode-card mode-versus" data-mode="versus">
+          <div class="mode-icon">⚔️</div>
+          <h2>双人竞技模式</h2>
+          <p>和朋友比拼合成速度</p>
+          <button class="btn btn-primary">开始对战</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="game-container" id="gameContainer" style="display:none;">
+      <header class="game-header">
+        <div class="mode-back">
+          <button id="backToModeBtn" class="btn btn-secondary">← 返回模式选择</button>
+        </div>
+        <div class="player-info">
+          <input type="text" id="playerName" placeholder="输入你的名字" value="玩家">
+        </div>
+        <div class="game-stats">
+          <div class="stat-item">
+            <span class="stat-label">关卡</span>
+            <span id="currentLevel" class="stat-value">1</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">得分</span>
+            <span id="currentScore" class="stat-value">0</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">时间</span>
+            <span id="timeLeft" class="stat-value">60</span>
+          </div>
+        </div>
+        <div class="game-controls">
+          <button id="startBtn" class="btn btn-primary">开始游戏</button>
+          <button id="pauseBtn" class="btn btn-secondary" style="display:none;">暂停</button>
+          <button id="resetBtn" class="btn btn-danger">重置</button>
+        </div>
+      </header>
+
+      <div class="game-main">
+        <div class="target-section">
+          <div class="target-card">
+            <h3>合成目标</h3>
+            <div id="targetElement" class="element-display">
+              <div class="element-info">
+                <div class="element-symbol" id="targetSymbol">?</div>
+                <div class="element-name" id="targetName">请选择模式</div>
+              </div>
+              <div class="element-requirements" id="elementRequirements">
+                <div class="requirement-item">
+                  <span class="particle proton-icon">P</span>
+                  <span id="requiredProtons">0</span>
+                </div>
+                <div class="requirement-item">
+                  <span class="particle neutron-icon">N</span>
+                  <span id="requiredNeutrons">0</span>
+                </div>
+                <div class="requirement-item">
+                  <span class="particle electron-icon">E</span>
+                  <span id="requiredElectrons">0</span>
+                </div>
+              </div>
+              <div class="molecule-requirements" id="moleculeRequirements" style="display:none;">
+                <div class="molecule-atoms" id="moleculeAtoms"></div>
+                <div class="molecule-bonds" id="moleculeBonds"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="atom-section">
+          <div id="atomModel" class="atom-model">
+            <div id="nucleus" class="nucleus">
+              <div id="nucleusParticles" class="nucleus-particles"></div>
+            </div>
+            <div id="electronShells" class="electron-shells"></div>
+          </div>
+          <div id="moleculeWorkspace" class="molecule-workspace" style="display:none;">
+            <canvas id="moleculeCanvas"></canvas>
+            <div id="atomRack" class="atom-rack"></div>
+          </div>
+          <div class="current-counts">
+            <div class="count-item">
+              <span class="particle proton-icon">P</span>
+              <span id="currentProtons">0</span>
+            </div>
+            <div class="count-item">
+              <span class="particle neutron-icon">N</span>
+              <span id="currentNeutrons">0</span>
+            </div>
+            <div class="count-item">
+              <span class="particle electron-icon">E</span>
+              <span id="currentElectrons">0</span>
+            </div>
+          </div>
+          <div class="molecule-controls" id="moleculeControls" style="display:none;">
+            <div class="bond-type-selector">
+              <label>选择键类型：</label>
+              <select id="bondTypeSelect">
+                <option value="single">单键 (-)</option>
+                <option value="double">双键 (=)</option>
+                <option value="triple">三键 (≡)</option>
+                <option value="ionic">离子键 (↔)</option>
+                <option value="polar">极性键 (→)</option>
+              </select>
+            </div>
+            <div class="molecule-hint">
+              <p>💡 拖拽原子到画布，然后点击两个原子连接化学键</p>
+            </div>
+          </div>
+          <button id="checkBtn" class="btn btn-success" disabled>检查合成</button>
+        </div>
+
+        <div class="particle-section">
+          <h3>粒子库</h3>
+          <div class="particle-types" id="particleTypes">
+            <div class="particle-group">
+              <div class="particle-label">质子</div>
+              <div class="particle-rack" id="protonRack"></div>
+            </div>
+            <div class="particle-group">
+              <div class="particle-label">中子</div>
+              <div class="particle-rack" id="neutronRack"></div>
+            </div>
+            <div class="particle-group">
+              <div class="particle-label">电子</div>
+              <div class="particle-rack" id="electronRack"></div>
+            </div>
+          </div>
+          <div class="atom-types" id="atomTypes" style="display:none;">
+            <div class="atom-group" id="atomRackContainer"></div>
+          </div>
+          <div class="hint-text">
+            <p>💡 提示：拖拽粒子到原子核或电子轨道</p>
+            <p>点击已放置的粒子可移除</p>
+          </div>
+        </div>
+      </div>
+
+      <div id="messageArea" class="message-area"></div>
+    </div>
+
+    <div class="collection-container" id="collectionContainer" style="display:none;">
+      <header class="collection-header">
+        <button id="backFromCollectionBtn" class="btn btn-secondary">← 返回模式选择</button>
+        <h1>📚 元素周期表图鉴</h1>
+        <div class="collection-stats">
+          <span>已收集: <strong id="collectedCount">0</strong>/20</span>
+          <span class="collection-progress">
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </span>
+        </div>
+      </header>
+      
+      <div class="periodic-table" id="periodicTable"></div>
+      
+      <div class="element-detail-modal" id="elementDetailModal" style="display:none;">
+        <div class="detail-content">
+          <button class="close-btn" id="closeDetailBtn">×</button>
+          <div class="detail-symbol" id="detailSymbol">?</div>
+          <div class="detail-info">
+            <h2 id="detailName">元素名称</h2>
+            <div class="detail-stats">
+              <p>原子序数: <span id="detailAtomicNumber">-</span></p>
+              <p>质量数: <span id="detailMassNumber">-</span></p>
+              <p>质子数: <span id="detailProtons">-</span></p>
+              <p>中子数: <span id="detailNeutrons">-</span></p>
+              <p>电子数: <span id="detailElectrons">-</span></p>
+              <p>元素分类: <span id="detailCategory">-</span></p>
+              <p>周期: <span id="detailPeriod">-</span></p>
+              <p>族: <span id="detailGroup">-</span></p>
+            </div>
+            <div class="detail-status" id="detailStatus">
+              <span class="status-locked">🔒 未收集</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="versus-container" id="versusContainer" style="display:none;">
+      <header class="versus-header">
+        <button id="backFromVersusBtn" class="btn btn-secondary">← 返回模式选择</button>
+        <h1>⚔️ 双人竞技模式</h1>
+      </header>
+      
+      <div class="versus-lobby" id="versusLobby">
+        <div class="lobby-section">
+          <h2>创建对战</h2>
+          <div class="lobby-input">
+            <input type="text" id="createPlayerName" placeholder="输入你的名字" value="玩家1">
+            <button id="createMatchBtn" class="btn btn-primary">创建房间</button>
+          </div>
+          <div class="created-match" id="createdMatch" style="display:none;">
+            <p>房间号: <strong id="createdMatchId">-</strong></p>
+            <p>等待对手加入...</p>
+            <button id="cancelMatchBtn" class="btn btn-danger">取消</button>
+          </div>
+        </div>
+        
+        <div class="lobby-section">
+          <h2>加入对战</h2>
+          <div class="lobby-input">
+            <input type="text" id="joinPlayerName" placeholder="输入你的名字" value="玩家2">
+            <input type="number" id="joinMatchId" placeholder="输入房间号">
+            <button id="joinMatchBtn" class="btn btn-primary">加入房间</button>
+          </div>
+          <div class="available-matches" id="availableMatches"></div>
+        </div>
+      </div>
+      
+      <div class="versus-game" id="versusGame" style="display:none;">
+        <div class="versus-players">
+          <div class="player-panel player1" id="player1Panel">
+            <h3>玩家1: <span id="player1Name">-</span></h3>
+            <div class="player-score">得分: <span id="player1Score">0</span></div>
+            <div class="player-progress">
+              <span>已完成: <span id="player1Completed">0</span></span>
+            </div>
+          </div>
+          <div class="vs-divider">VS</div>
+          <div class="player-panel player2" id="player2Panel">
+            <h3>玩家2: <span id="player2Name">-</span></h3>
+            <div class="player-score">得分: <span id="player2Score">0</span></div>
+            <div class="player-progress">
+              <span>已完成: <span id="player2Completed">0</span></span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="versus-target">
+          <h3>当前目标</h3>
+          <div class="versus-element" id="versusElement">
+            <span class="versus-symbol" id="versusSymbol">-</span>
+            <span class="versus-name" id="versusName">-</span>
+          </div>
+        </div>
+        
+        <div class="versus-controls">
+          <button id="player1CompleteBtn" class="btn btn-success player1-btn">玩家1: 完成!</button>
+          <button id="player2CompleteBtn" class="btn btn-success player2-btn">玩家2: 完成!</button>
+        </div>
+        
+        <div class="versus-actions">
+          <button id="startVersusBtn" class="btn btn-primary">开始对战</button>
+          <button id="endVersusBtn" class="btn btn-danger">结束对战</button>
+        </div>
+      </div>
+      
+      <div class="versus-result" id="versusResult" style="display:none;">
+        <div class="result-content">
+          <h2 id="versusResultTitle">游戏结束</h2>
+          <div class="result-scores">
+            <div class="result-player">
+              <span id="resultPlayer1Name">玩家1</span>
+              <span class="score" id="resultPlayer1Score">0</span>
+            </div>
+            <div class="result-vs">VS</div>
+            <div class="result-player">
+              <span id="resultPlayer2Name">玩家2</span>
+              <span class="score" id="resultPlayer2Score">0</span>
+            </div>
+          </div>
+          <button id="playAgainVersusBtn" class="btn btn-primary">再来一局</button>
+          <button id="backToLobbyBtn" class="btn btn-secondary">返回大厅</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="gameOverModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h2 id="gameOverTitle">游戏结束</h2>
+        <div id="gameOverStats">
+          <p>最终得分：<span id="finalScore">0</span></p>
+          <p>到达关卡：<span id="finalLevel">1</span></p>
+        </div>
+        <button id="playAgainBtn" class="btn btn-primary">再玩一次</button>
+      </div>
+    </div>
+
+    <div id="leaderboardModal" class="modal" style="display:none;">
+      <div class="modal-content">
+        <h2>排行榜</h2>
+        <div id="leaderboardList" class="leaderboard-list"></div>
+        <button id="closeLeaderboardBtn" class="btn btn-secondary">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>
